@@ -1,0 +1,684 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --bg2: #1a1d27; --bg3: #21253a;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #e8eaf0; --text2: #8b92a8; --text3: #555d75;
+    --accent: #4f8ef7; --accent2: #7c5cfc; --green: #22c55e;
+    --amber: #f59e0b; --red: #ef4444; --teal: #14b8a6;
+    --card-r: 12px; --font: 'Inter', system-ui, sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; line-height: 1.5; }
+  .app { display: flex; height: 100vh; min-height: 600px; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; flex-shrink: 0; }
+  .logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+  .logo-title { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
+  .logo-sub { font-size: 10px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+  .nav { padding: 12px 8px; flex: 1; overflow-y: auto; }
+  .nav-section { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; padding: 8px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 12.5px; transition: all 0.15s; margin: 1px 0; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(79,142,247,0.12); color: var(--accent); font-weight: 500; }
+  .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+
+  /* Main content */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; flex: 1; }
+  .notif-btn { position: relative; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--bg2); }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Notification Panel */
+  .notif-panel { position: fixed; top: 56px; right: 0; width: 340px; background: var(--bg2); border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 100; max-height: 480px; overflow-y: auto; display: none; }
+  .notif-panel.open { display: block; }
+  .notif-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+  .notif-clear { font-size: 11px; color: var(--accent); cursor: pointer; }
+  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
+  .notif-item:last-child { border: none; }
+  .notif-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .notif-body { flex: 1; }
+  .notif-msg { font-size: 12.5px; color: var(--text); line-height: 1.4; }
+  .notif-time { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .notif-tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+  .tag-urgent { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-info { background: rgba(79,142,247,0.12); color: var(--accent); }
+  .tag-warn { background: rgba(245,158,11,0.12); color: var(--amber); }
+
+  /* Cards */
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+  .stat-sub { font-size: 11px; color: var(--text3); }
+  .stat-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+  .v-accent { color: var(--accent); }
+  .v-green { color: var(--green); }
+  .v-amber { color: var(--amber); }
+  .v-red { color: var(--red); }
+  .v-teal { color: var(--teal); }
+
+  /* Module sections */
+  .module { display: none; }
+  .module.active { display: block; }
+
+  /* Section header */
+  .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .sec-title { font-size: 14px; font-weight: 600; }
+  .btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 500; }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+  .btn:hover { opacity: 0.85; }
+  .btn-outline:hover { background: var(--bg3); }
+
+  /* Table styles */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); overflow: hidden; margin-bottom: 20px; }
+  .table-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--bg3); color: var(--text3); text-align: left; padding: 10px 14px; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 500; }
+  .badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+  .badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+  .badge-blue { background: rgba(79,142,247,0.12); color: var(--accent); }
+  .badge-teal { background: rgba(20,184,166,0.12); color: var(--teal); }
+
+  /* Summary boxes for GSTR-2B */
+  .recon-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .recon-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .recon-num { font-size: 22px; font-weight: 700; }
+  .recon-lbl { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* Upload area */
+  .upload-area { border: 2px dashed var(--border2); border-radius: var(--card-r); padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
+  .upload-area:hover { border-color: var(--accent); background: rgba(79,142,247,0.04); }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-text { color: var(--text2); font-size: 12.5px; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-chip { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); color: var(--text2); font-size: 12px; cursor: pointer; background: transparent; }
+  .filter-chip.active { background: rgba(79,142,247,0.15); border-color: var(--accent); color: var(--accent); }
+
+  /* Progress bar */
+  .progress-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+  /* AI result box */
+  .ai-box { background: rgba(79,142,247,0.06); border: 1px solid rgba(79,142,247,0.2); border-radius: var(--card-r); padding: 16px; margin-top: 16px; }
+  .ai-box-title { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Loading spinner */
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .mt-16 { margin-top: 16px; }
+</style>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">CA Office Pro</div>
+      <div class="logo-sub">AutoLedger AI Suite</div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="switchModule('dashboard', this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="switchModule('tally', this)">
+        <span class="nav-icon">🤖</span> Tally AI Entry
+      </div>
+      <div class="nav-section">GST</div>
+      <div class="nav-item" onclick="switchModule('gst', this)">
+        <span class="nav-icon">📋</span> Auto GST Filing
+      </div>
+      <div class="nav-item" onclick="switchModule('recon', this)">
+        <span class="nav-icon">🔄</span> GSTR-2B Recon
+        <span class="nav-badge">New</span>
+      </div>
+      <div class="nav-section">Clients</div>
+      <div class="nav-item" onclick="switchModule('clients', this)">
+        <span class="nav-icon">👥</span> Clients
+      </div>
+      <div class="nav-item" onclick="switchModule('due', this)">
+        <span class="nav-icon">📅</span> Due Dates
+        <span class="nav-badge">3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:11px;color:var(--text3);">AY 2024-25</div>
+        <div class="notif-btn" onclick="toggleNotif()" id="notif-btn">
+          🔔
+          <div class="notif-dot" id="notif-dot"></div>
+        </div>
+        <div class="avatar">MM</div>
+      </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div class="notif-panel" id="notif-panel">
+      <div class="notif-header">
+        Notifications
+        <span class="notif-clear" onclick="clearNotifs()">सभी clear करें</span>
+      </div>
+      <div id="notif-list">
+        <div class="notif-item">
+          <div class="notif-icon">⚠️</div>
+          <div class="notif-body">
+            <div class="notif-msg">GSTR-3B Due Date — 5 clients की filing बाकी है। Deadline: 20 Jan 2025</div>
+            <div class="notif-tag tag-urgent">Urgent</div>
+            <div class="notif-time">आज, 9:30 AM</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">📌</div>
+          <div class="notif-body">
+            <div class="notif-msg">TDS Return Q3 — Rajeev Traders की TDS return 31 Jan तक जमा करनी है।</div>
+            <div class="notif-tag tag-warn">Reminder</div>
+            <div class="notif-time">कल, 3:00 PM</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">✅</div>
+          <div class="notif-body">
+            <div class="notif-msg">GSTR-2B Reconciliation — Sharma Enterprises की reconciliation complete हुई। 2 mismatches मिले।</div>
+            <div class="notif-tag tag-info">Completed</div>
+            <div class="notif-time">2 दिन पहले</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-icon">🚨</div>
+          <div class="notif-body">
+            <div class="notif-msg">Income Tax — ITR-3 filing for FY 2023-24: 4 clients का audit pending है।</div>
+            <div class="notif-tag tag-urgent">Urgent</div>
+            <div class="notif-time">3 दिन पहले</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content">
+
+      <!-- DASHBOARD MODULE -->
+      <div class="module active" id="mod-dashboard">
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="stat-label">Total Clients</div>
+            <div class="stat-value v-accent">47</div>
+            <div class="stat-sub"><span class="stat-dot" style="background:var(--green)"></span>+3 this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Returns</div>
+            <div class="stat-value v-amber">12</div>
+            <div class="stat-sub"><span class="stat-dot" style="background:var(--red)"></span>3 Overdue</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fees Collected</div>
+            <div class="stat-value v-green">₹4.2L</div>
+            <div class="stat-sub"><span class="stat-dot" style="background:var(--amber)"></span>₹1.1L pending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">AI Entries</div>
+            <div class="stat-value v-teal">218</div>
+            <div class="stat-sub"><span class="stat-dot" style="background:var(--teal)"></span>96% accuracy</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-head">
+            <span style="font-weight:600;font-size:13px;">Recent Activity</span>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Client</th><th>Task</th><th>Due Date</th><th>Status</th><th>Action</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Sharma Enterprises</td><td>GSTR-3B Dec</td><td>20 Jan</td><td><span class="badge badge-amber">Pending</span></td><td style="color:var(--accent);cursor:pointer">→ File</td></tr>
+              <tr><td>Rajeev Traders</td><td>TDS Q3</td><td>31 Jan</td><td><span class="badge badge-amber">Pending</span></td><td style="color:var(--accent);cursor:pointer">→ File</td></tr>
+              <tr><td>Gupta & Sons</td><td>GSTR-1 Dec</td><td>11 Jan</td><td><span class="badge badge-green">Filed</span></td><td style="color:var(--text3)">Done</td></tr>
+              <tr><td>Verma Industries</td><td>ITR-3 AY24</td><td>31 Mar</td><td><span class="badge badge-blue">In Progress</span></td><td style="color:var(--accent);cursor:pointer">→ Open</td></tr>
+              <tr><td>Patel Pharma</td><td>GSTR-9 FY23</td><td>31 Dec</td><td><span class="badge badge-red">Overdue</span></td><td style="color:var(--red);cursor:pointer">Urgent!</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- GSTR-2B RECONCILIATION MODULE -->
+      <div class="module" id="mod-recon">
+        <div class="sec-head">
+          <div class="sec-title">GSTR-2B Reconciliation</div>
+          <div class="flex gap-8">
+            <button class="btn-outline" onclick="downloadRecon()">⬇ Export Excel</button>
+            <button class="btn" onclick="runRecon()">🔄 Reconcile Now</button>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="recon-summary">
+          <div class="recon-box">
+            <div class="recon-num v-accent" id="r-total">0</div>
+            <div class="recon-lbl">Total Invoices</div>
+          </div>
+          <div class="recon-box">
+            <div class="recon-num v-green" id="r-matched">0</div>
+            <div class="recon-lbl">Matched ✓</div>
+          </div>
+          <div class="recon-box">
+            <div class="recon-num v-red" id="r-mismatch">0</div>
+            <div class="recon-lbl">Amount Mismatch</div>
+          </div>
+          <div class="recon-box">
+            <div class="recon-num v-amber" id="r-missing">0</div>
+            <div class="recon-lbl">In 2B, Not in Books</div>
+          </div>
+          <div class="recon-box">
+            <div class="recon-num v-teal" id="r-excess">0</div>
+            <div class="recon-lbl">In Books, Not in 2B</div>
+          </div>
+        </div>
+
+        <!-- Filter chips -->
+        <div class="filter-bar">
+          <button class="filter-chip active" onclick="filterRecon('all', this)">All Records</button>
+          <button class="filter-chip" onclick="filterRecon('matched', this)">Matched</button>
+          <button class="filter-chip" onclick="filterRecon('mismatch', this)">Amount Mismatch</button>
+          <button class="filter-chip" onclick="filterRecon('missing', this)">Missing in Books</button>
+          <button class="filter-chip" onclick="filterRecon('excess', this)">Excess in Books</button>
+        </div>
+
+        <!-- Loading -->
+        <div id="recon-loading" class="hidden" style="text-align:center;padding:40px;color:var(--text3);">
+          <div class="spinner" style="margin:0 auto 12px;"></div>
+          <div>Reconciliation चल रही है... कृपया प्रतीक्षा करें</div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="recon-empty">
+          <div class="upload-area" onclick="startRecon()">
+            <div class="upload-icon">📂</div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:6px;">GSTR-2B JSON + Purchase Register Upload करें</div>
+            <div class="upload-text">या यहाँ क्लिक करके reconciliation शुरू करें</div>
+            <div style="margin-top:12px;font-size:11px;color:var(--text3)">Supported: GSTR-2B JSON, Excel Purchase Register, Tally Export</div>
+          </div>
+          <div style="text-align:center;margin-top:-8px;">
+            <button class="btn" onclick="loadDemoData()">Demo Data से Try करें →</button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap hidden" id="recon-table-wrap">
+          <div class="table-head">
+            <span style="font-weight:600;font-size:13px;">Reconciliation Details</span>
+            <span style="font-size:11px;color:var(--text3)" id="recon-period">Period: Dec 2024</span>
+          </div>
+          <div style="overflow-x:auto;">
+          <table id="recon-table">
+            <thead><tr>
+              <th>#</th>
+              <th>Supplier GSTIN</th>
+              <th>Supplier Name</th>
+              <th>Invoice No</th>
+              <th>Invoice Date</th>
+              <th>2B Taxable Amt</th>
+              <th>Books Taxable Amt</th>
+              <th>2B IGST</th>
+              <th>Books IGST</th>
+              <th>2B CGST+SGST</th>
+              <th>Books CGST+SGST</th>
+              <th>Difference</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr></thead>
+            <tbody id="recon-tbody"></tbody>
+          </table>
+          </div>
+        </div>
+
+        <!-- AI Suggestion Box -->
+        <div class="ai-box hidden" id="ai-suggestion">
+          <div class="ai-box-title">🤖 AI Analysis</div>
+          <div id="ai-suggestion-text" style="font-size:12.5px;color:var(--text2);line-height:1.7;"></div>
+        </div>
+      </div>
+
+      <!-- TALLY AI MODULE -->
+      <div class="module" id="mod-tally">
+        <div class="sec-head">
+          <div class="sec-title">Tally AI Entry</div>
+          <div class="flex gap-8">
+            <button class="btn-outline">📡 Tally Connect</button>
+            <button class="btn" onclick="doTallyAI()">🤖 AI से Entry करें</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="upload-area" onclick="doTallyAI()">
+              <div class="upload-icon">📄</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:6px;">Bill / Invoice Upload करें</div>
+              <div class="upload-text">PDF, JPG, PNG supported</div>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin:0;">
+            <div class="table-head"><span style="font-weight:600;font-size:13px;">Recent AI Entries</span></div>
+            <table>
+              <thead><tr><th>Date</th><th>Party</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>12 Jan</td><td>ABC Supplies</td><td>₹45,200</td><td><span class="badge badge-green">Done</span></td></tr>
+                <tr><td>11 Jan</td><td>XYZ Traders</td><td>₹18,750</td><td><span class="badge badge-green">Done</span></td></tr>
+                <tr><td>10 Jan</td><td>Ram Hardware</td><td>₹92,000</td><td><span class="badge badge-amber">Review</span></td></tr>
+                <tr><td>09 Jan</td><td>Sita Enterprises</td><td>₹31,500</td><td><span class="badge badge-green">Done</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="ai-box hidden" id="tally-ai-result" style="margin-top:16px;">
+          <div class="ai-box-title">🤖 AI Entry Result</div>
+          <div id="tally-ai-text" style="font-size:12.5px;color:var(--text2);line-height:1.7;"></div>
+        </div>
+        <div id="tally-loading" class="hidden" style="text-align:center;padding:40px;color:var(--text3);">
+          <div class="spinner" style="margin:0 auto 12px;"></div>
+          <div>AI bill analyze कर रहा है...</div>
+        </div>
+      </div>
+
+      <!-- AUTO GST MODULE -->
+      <div class="module" id="mod-gst">
+        <div class="sec-head">
+          <div class="sec-title">Auto GST Filing — GSTR-3B</div>
+          <button class="btn" onclick="doGSTAnalysis()">🤖 AI Analysis करें</button>
+        </div>
+        <div class="grid-4" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
+          <div class="stat-card"><div class="stat-label">Outward Supplies</div><div class="stat-value v-accent">₹18.4L</div></div>
+          <div class="stat-card"><div class="stat-label">ITC Available</div><div class="stat-value v-green">₹2.8L</div></div>
+          <div class="stat-card"><div class="stat-label">Tax Payable</div><div class="stat-value v-amber">₹94,200</div></div>
+          <div class="stat-card"><div class="stat-label">Late Fee Risk</div><div class="stat-value v-red">₹0</div></div>
+        </div>
+        <div id="gst-loading" class="hidden" style="text-align:center;padding:30px;color:var(--text3);">
+          <div class="spinner" style="margin:0 auto 12px;"></div>
+          <div>AI GSTR-3B analyze कर रहा है...</div>
+        </div>
+        <div class="ai-box hidden" id="gst-ai-result">
+          <div class="ai-box-title">🤖 AI Analysis</div>
+          <div id="gst-ai-text" style="font-size:12.5px;color:var(--text2);line-height:1.7;"></div>
+        </div>
+      </div>
+
+      <!-- CLIENTS MODULE -->
+      <div class="module" id="mod-clients">
+        <div class="sec-head">
+          <div class="sec-title">Client Management</div>
+          <button class="btn">+ New Client</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Client Name</th><th>GSTIN</th><th>PAN</th><th>Category</th><th>Fees/yr</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><b>Sharma Enterprises</b></td><td>22AAAAA0000A1Z5</td><td>AAAAA0000A</td><td><span class="badge badge-blue">Pvt Ltd</span></td><td>₹48,000</td><td><span class="badge badge-green">Active</span></td></tr>
+              <tr><td><b>Rajeev Traders</b></td><td>22BBBBB0000B1Z5</td><td>BBBBB0000B</td><td><span class="badge badge-teal">Partnership</span></td><td>₹24,000</td><td><span class="badge badge-green">Active</span></td></tr>
+              <tr><td><b>Gupta & Sons</b></td><td>22CCCCC0000C1Z5</td><td>CCCCC0000C</td><td><span class="badge badge-amber">Proprietorship</span></td><td>₹18,000</td><td><span class="badge badge-amber">Pending Docs</span></td></tr>
+              <tr><td><b>Patel Pharma Pvt Ltd</b></td><td>22DDDDD0000D1Z5</td><td>DDDDD0000D</td><td><span class="badge badge-blue">Pvt Ltd</span></td><td>₹72,000</td><td><span class="badge badge-red">Overdue</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DUE DATES MODULE -->
+      <div class="module" id="mod-due">
+        <div class="sec-head"><div class="sec-title">GST & Tax Due Dates — January 2025</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Due Date</th><th>Return Type</th><th>Description</th><th>Clients Affected</th><th>Days Left</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="color:var(--red);font-weight:600;">11 Jan</td><td>GSTR-1</td><td>Monthly outward supplies (Oct taxpayers)</td><td>12</td><td style="color:var(--red);">Overdue</td><td><span class="badge badge-red">Missed</span></td></tr>
+              <tr><td style="color:var(--amber);font-weight:600;">20 Jan</td><td>GSTR-3B</td><td>Monthly summary return</td><td>8</td><td style="color:var(--amber);">5 days</td><td><span class="badge badge-amber">Urgent</span></td></tr>
+              <tr><td>25 Jan</td><td>GST PMT-06</td><td>QRMP scheme challan payment</td><td>5</td><td>10 days</td><td><span class="badge badge-blue">Upcoming</span></td></tr>
+              <tr><td>28 Jan</td><td>GSTR-11</td><td>UIN holders inward supplies</td><td>1</td><td>13 days</td><td><span class="badge badge-blue">Upcoming</span></td></tr>
+              <tr><td>31 Jan</td><td>TDS Return</td><td>Q3 TDS/TCS Return filing</td><td>15</td><td>16 days</td><td><span class="badge badge-blue">Upcoming</span></td></tr>
+              <tr><td>31 Jan</td><td>ITR Filing</td><td>Belated/Revised ITR AY 2024-25</td><td>6</td><td>16 days</td><td><span class="badge badge-green">On Track</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const reconData = [
+  { gstin:'22AAAAA0000A1Z5', name:'Sharma Enterprises', inv:'INV-2024-001', date:'05-Dec-24', tax2b:45000, taxBook:45000, igst2b:8100, igstBook:8100, cs2b:0, csBook:0, status:'matched' },
+  { gstin:'22BBBBB0000B1Z5', name:'Rajeev Traders', inv:'RT/1234/24', date:'08-Dec-24', tax2b:28500, taxBook:29000, igst2b:5130, igstBook:5220, cs2b:0, csBook:0, status:'mismatch' },
+  { gstin:'22CCCCC0000C1Z5', name:'Gupta & Sons', inv:'GS-456', date:'12-Dec-24', tax2b:15200, taxBook:0, igst2b:0, igstBook:0, cs2b:2736, csBook:0, status:'missing' },
+  { gstin:'22DDDDD0000D1Z5', name:'Patel Pharma', inv:'PP/890', date:'14-Dec-24', tax2b:0, taxBook:62000, igst2b:0, igstBook:11160, cs2b:0, csBook:0, status:'excess' },
+  { gstin:'22EEEEE0000E1Z5', name:'Verma Industries', inv:'VI-2024-78', date:'18-Dec-24', tax2b:38000, taxBook:38000, igst2b:6840, igstBook:6840, cs2b:0, csBook:0, status:'matched' },
+  { gstin:'22FFFFF0000F1Z5', name:'Singh & Brothers', inv:'SB/112', date:'20-Dec-24', tax2b:92000, taxBook:90000, igst2b:16560, igstBook:16200, cs2b:0, csBook:0, status:'mismatch' },
+  { gstin:'22GGGGG0000G1Z5', name:'Kumar Exports', inv:'KE-345', date:'22-Dec-24', tax2b:55000, taxBook:55000, igst2b:9900, igstBook:9900, cs2b:0, csBook:0, status:'matched' },
+  { gstin:'22HHHHH0000H1Z5', name:'Joshi Textiles', inv:'JT/567', date:'24-Dec-24', tax2b:23000, taxBook:0, igst2b:0, igstBook:0, cs2b:4140, csBook:0, status:'missing' },
+];
+
+let currentFilter = 'all';
+let dataLoaded = false;
+
+function switchModule(id, el) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('mod-' + id).classList.add('active');
+  el.classList.add('active');
+  const titles = { dashboard:'Dashboard', tally:'Tally AI Entry', gst:'Auto GST Filing', recon:'GSTR-2B Reconciliation', clients:'Client Management', due:'Due Dates Calendar' };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  if (document.getElementById('notif-panel').classList.contains('open')) {
+    document.getElementById('notif-panel').classList.remove('open');
+  }
+}
+
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+
+function clearNotifs() {
+  document.getElementById('notif-list').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;">कोई notification नहीं।</div>';
+  document.getElementById('notif-dot').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.remove('open');
+  }
+});
+
+function loadDemoData() {
+  document.getElementById('recon-empty').classList.add('hidden');
+  document.getElementById('recon-loading').classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('recon-loading').classList.add('hidden');
+    renderReconTable(reconData);
+    updateReconSummary(reconData);
+    document.getElementById('recon-table-wrap').classList.remove('hidden');
+    document.getElementById('ai-suggestion').classList.remove('hidden');
+    showAISuggestion(reconData);
+    dataLoaded = true;
+  }, 1800);
+}
+
+function startRecon() { loadDemoData(); }
+
+function updateReconSummary(data) {
+  document.getElementById('r-total').textContent = data.length;
+  document.getElementById('r-matched').textContent = data.filter(r => r.status === 'matched').length;
+  document.getElementById('r-mismatch').textContent = data.filter(r => r.status === 'mismatch').length;
+  document.getElementById('r-missing').textContent = data.filter(r => r.status === 'missing').length;
+  document.getElementById('r-excess').textContent = data.filter(r => r.status === 'excess').length;
+}
+
+function renderReconTable(data) {
+  const statusMap = {
+    matched: '<span class="badge badge-green">✓ Matched</span>',
+    mismatch: '<span class="badge badge-amber">⚠ Mismatch</span>',
+    missing: '<span class="badge badge-red">✗ Not in Books</span>',
+    excess: '<span class="badge badge-teal">+ Excess in Books</span>'
+  };
+  const actionMap = {
+    matched: '<span style="color:var(--text3);font-size:11px;">—</span>',
+    mismatch: '<span style="color:var(--amber);cursor:pointer;font-size:11px;">Review →</span>',
+    missing: '<span style="color:var(--accent);cursor:pointer;font-size:11px;">Entry करें →</span>',
+    excess: '<span style="color:var(--teal);cursor:pointer;font-size:11px;">Verify करें →</span>'
+  };
+  const rows = data.map((r, i) => {
+    const diff = (r.igst2b + r.cs2b) - (r.igstBook + r.csBook);
+    const diffStr = diff === 0 ? '<span style="color:var(--text3)">₹0</span>' :
+      diff > 0 ? `<span style="color:var(--red)">-₹${Math.abs(diff).toLocaleString('en-IN')}</span>` :
+      `<span style="color:var(--green)">+₹${Math.abs(diff).toLocaleString('en-IN')}</span>`;
+    return `<tr>
+      <td style="color:var(--text3)">${i+1}</td>
+      <td style="font-size:11px;font-family:monospace;color:var(--text2)">${r.gstin}</td>
+      <td style="font-weight:500">${r.name}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.inv}</td>
+      <td style="font-size:11px">${r.date}</td>
+      <td style="text-align:right">${r.tax2b ? '₹'+r.tax2b.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right">${r.taxBook ? '₹'+r.taxBook.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right">${r.igst2b ? '₹'+r.igst2b.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right">${r.igstBook ? '₹'+r.igstBook.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right">${r.cs2b ? '₹'+r.cs2b.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right">${r.csBook ? '₹'+r.csBook.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right;font-weight:500">${diffStr}</td>
+      <td>${statusMap[r.status]}</td>
+      <td>${actionMap[r.status]}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('recon-tbody').innerHTML = rows;
+}
+
+function filterRecon(type, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = type;
+  if (!dataLoaded) return;
+  const filtered = type === 'all' ? reconData : reconData.filter(r => r.status === type);
+  renderReconTable(filtered);
+}
+
+function showAISuggestion(data) {
+  const mismatches = data.filter(r => r.status === 'mismatch');
+  const missing = data.filter(r => r.status === 'missing');
+  const excess = data.filter(r => r.status === 'excess');
+  const totalDiff = mismatches.reduce((s, r) => s + Math.abs((r.igst2b+r.cs2b)-(r.igstBook+r.csBook)), 0);
+  document.getElementById('ai-suggestion-text').innerHTML = `
+    <b style="color:var(--text)">December 2024 Reconciliation Summary:</b><br><br>
+    ✅ <b style="color:var(--green)">${data.filter(r=>r.status==='matched').length} invoices</b> perfectly matched हैं — ITC claim के लिए eligible।<br><br>
+    ⚠️ <b style="color:var(--amber)">${mismatches.length} invoices</b> में amount mismatch है। Total difference: <b style="color:var(--red)">₹${totalDiff.toLocaleString('en-IN')}</b>।
+    <br>→ <i>Rajeev Traders (RT/1234/24)</i> में ₹90 का IGST difference — supplier से revised invoice मांगें।
+    <br>→ <i>Singh & Brothers (SB/112)</i> में ₹360 का IGST difference — purchase register verify करें।<br><br>
+    ❌ <b style="color:var(--red)">${missing.length} invoices</b> GSTR-2B में हैं पर books में नहीं।
+    <br>→ Gupta & Sons और Joshi Textiles की entries Tally में जोड़ें — ITC miss हो रहा है।<br><br>
+    ➕ <b style="color:var(--teal)">${excess.length} invoice</b> books में है पर GSTR-2B में नहीं।
+    <br>→ Patel Pharma का ₹62,000 का invoice — supplier ने GSTR-1 में file नहीं किया। Follow up करें।<br><br>
+    <b style="color:var(--amber)">⚡ Recommended Action:</b> Mismatched और missing entries resolve करके ITC क्लेम maximize करें। अनुमानित additional ITC: <b style="color:var(--green)">₹${(totalDiff + 2736 + 4140).toLocaleString('en-IN')}</b>
+  `;
+}
+
+function runRecon() { loadDemoData(); }
+
+function downloadRecon() {
+  alert('Excel export feature — real implementation में यह XLSX file download करेगा।');
+}
+
+async function doTallyAI() {
+  const loading = document.getElementById('tally-loading');
+  const result = document.getElementById('tally-ai-result');
+  const text = document.getElementById('tally-ai-text');
+  loading.classList.remove('hidden');
+  result.classList.add('hidden');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{ role:'user', content:'मैं एक CA हूँ। एक dummy purchase invoice के लिए Tally voucher entry data JSON में बनाओ। Party: "ABC Suppliers Pvt Ltd", Amount: ₹45,200, GST 18%, Date: 15-Jan-2025, Item: "Office Stationery". JSON format में दो: { party, date, amount, gst_rate, cgst, sgst, total, narration, ledger_entries[] }. सिर्फ JSON, कोई extra text नहीं।' }]
+      })
+    });
+    const data = await resp.json();
+    let txt = data.content.map(i => i.text||'').join('');
+    txt = txt.replace(/```json|```/g,'').trim();
+    let parsed;
+    try { parsed = JSON.parse(txt); } catch(e) { parsed = null; }
+    if (parsed) {
+      text.innerHTML = `
+        <b style="color:var(--text)">✅ Voucher Entry Ready:</b><br><br>
+        <b>Party:</b> ${parsed.party || 'ABC Suppliers Pvt Ltd'}<br>
+        <b>Date:</b> ${parsed.date || '15-Jan-2025'}<br>
+        <b>Taxable Amount:</b> ₹${(parsed.amount||38305).toLocaleString('en-IN')}<br>
+        <b>CGST (9%):</b> ₹${(parsed.cgst||3448).toLocaleString('en-IN')}<br>
+        <b>SGST (9%):</b> ₹${(parsed.sgst||3448).toLocaleString('en-IN')}<br>
+        <b>Total:</b> ₹${(parsed.total||45200).toLocaleString('en-IN')}<br>
+        <b>Narration:</b> ${parsed.narration||'Being purchase of office stationery'}<br><br>
+        <span style="color:var(--green)">Tally में auto-entry के लिए तैयार है।</span>
+      `;
+    } else {
+      text.innerHTML = `<pre style="font-size:11px;white-space:pre-wrap;color:var(--text2)">${txt.substring(0,500)}</pre>`;
+    }
+    loading.classList.add('hidden');
+    result.classList.remove('hidden');
+  } catch(e) {
+    loading.classList.add('hidden');
+    text.innerHTML = '<span style="color:var(--red)">Error: API call failed. Please check connection.</span>';
+    result.classList.remove('hidden');
+  }
+}
+
+async function doGSTAnalysis() {
+  const loading = document.getElementById('gst-loading');
+  const result = document.getElementById('gst-ai-result');
+  const text = document.getElementById('gst-ai-text');
+  loading.classList.remove('hidden');
+  result.classList.add('hidden');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        messages:[{ role:'user', content:'CA Office के लिए GSTR-3B analysis करो। Data: Outward Supplies ₹18.4L (IGST ₹8.5L, CGST ₹5L, SGST ₹5L), ITC Available ₹2.8L, Tax Payable ₹94,200, Filing Date 20 Jan 2025. 3-4 bullet points में Hindi/English mix में: ITC optimization tips, compliance risks, और filing recommendations दो। Short और practical।' }]
+      })
+    });
+    const data = await resp.json();
+    const txt = data.content.map(i => i.text||'').join('');
+    text.innerHTML = txt.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b style="color:var(--text)">$1</b>').replace(/\*(.*?)\*/g,'<i>$1</i>');
+    loading.classList.add('hidden');
+    result.classList.remove('hidden');
+  } catch(e) {
+    loading.classList.add('hidden');
+    text.innerHTML = '<span style="color:var(--red)">Error: API call failed.</span>';
+    result.classList.remove('hidden');
+  }
+}
+</script>
